@@ -1,0 +1,1323 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Árvore Geradora Mínima — Municípios de São Paulo",
+    "description": "Sistema web local que modela a malha de municípios de São Paulo como grafo ponderado e calcula a árvore geradora mínima com Prim e Kruskal, ambos implementados do zero.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/cities": {
+      "get": {
+        "tags": [
+          "árvore geradora mínima"
+        ],
+        "summary": "List Cities",
+        "description": "Lista paginada de municípios, com filtro por nome e ordenação.\n\nRetorna o envelope ``{items, total, limit, offset}`` do PLAN §9, mais a\nchave ``cities`` (alias de ``items``) mantida por retrocompatibilidade\ncom o frontend e com os testes atuais. Sem parâmetros a resposta é a\nlista completa, como antes.",
+        "operationId": "list_cities_api_v1_cities_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtro pelo nome do município, sem diferenciar maiúsculas nem acentos (ex.: 'sao' encontra 'São Paulo').",
+              "title": "Q"
+            },
+            "description": "Filtro pelo nome do município, sem diferenciar maiúsculas nem acentos (ex.: 'sao' encontra 'São Paulo')."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Máximo de itens da página. Omitido devolve a lista completa (comportamento antigo, usado pelo frontend).",
+              "title": "Limit"
+            },
+            "description": "Máximo de itens da página. Omitido devolve a lista completa (comportamento antigo, usado pelo frontend)."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Itens ignorados depois do filtro, antes do recorte da página.",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Itens ignorados depois do filtro, antes do recorte da página."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Campo de ordenação: name, id, lat ou lon. Um '-' na frente inverte a ordem (ex.: -name).",
+              "default": "name",
+              "title": "Sort"
+            },
+            "description": "Campo de ordenação: name, id, lat ou lon. Um '-' na frente inverte a ordem (ex.: -name)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CitiesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/presets": {
+      "get": {
+        "tags": [
+          "árvore geradora mínima"
+        ],
+        "summary": "List Presets",
+        "description": "Resumo das instâncias prontas.",
+        "operationId": "list_presets_api_v1_presets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresetsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/presets/{preset_id}": {
+      "get": {
+        "tags": [
+          "árvore geradora mínima"
+        ],
+        "summary": "Preset Detail",
+        "description": "Grafo completo de uma instância pronta.",
+        "operationId": "preset_detail_api_v1_presets__preset_id__get",
+        "parameters": [
+          {
+            "name": "preset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Preset Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresetDetailDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/graph/build": {
+      "post": {
+        "tags": [
+          "árvore geradora mínima"
+        ],
+        "summary": "Build Graph",
+        "description": "Monta o subgrafo induzido pela seleção de municípios.",
+        "operationId": "build_graph_api_v1_graph_build_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BuildGraphRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/graph/upload": {
+      "post": {
+        "tags": [
+          "árvore geradora mínima"
+        ],
+        "summary": "Upload Graph",
+        "description": "Recebe CSV ou JSON, valida e devolve o grafo (ou erro legível).",
+        "operationId": "upload_graph_api_v1_graph_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_graph_api_v1_graph_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResponseDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/run": {
+      "post": {
+        "tags": [
+          "árvore geradora mínima"
+        ],
+        "summary": "Run",
+        "description": "Executa Kruskal, Prim ou ambos, com trace e verificação opcionais.",
+        "operationId": "run_api_v1_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/benchmark": {
+      "post": {
+        "tags": [
+          "árvore geradora mínima"
+        ],
+        "summary": "Benchmark",
+        "description": "Executa a análise de tempo por tamanho de instância.\n\nAceita um grafo enviado pelo usuário (mesmo padrão do endpoint ``/run``)\nou, alternativamente, um preset_id para o comportamento histórico baseado\nem subgrafos por BFS a partir de Bauru.",
+        "operationId": "benchmark_api_v1_benchmark_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchmarkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "infraestrutura"
+        ],
+        "summary": "Health",
+        "description": "Verificação simples de que o servidor está no ar.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BenchmarkMetaDTO": {
+        "properties": {
+          "preset_id": {
+            "type": "string",
+            "title": "Preset Id"
+          },
+          "preset_name": {
+            "type": "string",
+            "title": "Preset Name"
+          },
+          "start_city": {
+            "type": "string",
+            "title": "Start City"
+          },
+          "start_city_name": {
+            "type": "string",
+            "title": "Start City Name"
+          },
+          "runs": {
+            "type": "integer",
+            "title": "Runs"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "preset_id",
+          "preset_name",
+          "start_city",
+          "start_city_name",
+          "runs",
+          "note"
+        ],
+        "title": "BenchmarkMetaDTO"
+      },
+      "BenchmarkRequest": {
+        "properties": {
+          "graph": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GraphDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "preset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset Id",
+            "default": "p3-estado-sp"
+          },
+          "runs": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Runs",
+            "default": 20
+          },
+          "start_city_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start City Name"
+          }
+        },
+        "type": "object",
+        "title": "BenchmarkRequest"
+      },
+      "BenchmarkResponse": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/BenchmarkRowDTO"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/BenchmarkMetaDTO"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rows",
+          "meta"
+        ],
+        "title": "BenchmarkResponse"
+      },
+      "BenchmarkRowDTO": {
+        "properties": {
+          "n_nodes": {
+            "type": "integer",
+            "title": "N Nodes"
+          },
+          "n_edges": {
+            "type": "integer",
+            "title": "N Edges"
+          },
+          "kruskal_ms": {
+            "type": "number",
+            "title": "Kruskal Ms"
+          },
+          "kruskal_p25_ms": {
+            "type": "number",
+            "title": "Kruskal P25 Ms"
+          },
+          "kruskal_p75_ms": {
+            "type": "number",
+            "title": "Kruskal P75 Ms"
+          },
+          "prim_ms": {
+            "type": "number",
+            "title": "Prim Ms"
+          },
+          "prim_p25_ms": {
+            "type": "number",
+            "title": "Prim P25 Ms"
+          },
+          "prim_p75_ms": {
+            "type": "number",
+            "title": "Prim P75 Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "n_nodes",
+          "n_edges",
+          "kruskal_ms",
+          "kruskal_p25_ms",
+          "kruskal_p75_ms",
+          "prim_ms",
+          "prim_p25_ms",
+          "prim_p75_ms"
+        ],
+        "title": "BenchmarkRowDTO"
+      },
+      "Body_upload_graph_api_v1_graph_upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_graph_api_v1_graph_upload_post"
+      },
+      "BuildGraphRequest": {
+        "properties": {
+          "city_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "City Ids"
+          },
+          "include_manual": {
+            "type": "boolean",
+            "title": "Include Manual",
+            "default": true
+          },
+          "connect_components": {
+            "type": "boolean",
+            "title": "Connect Components",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "city_ids"
+        ],
+        "title": "BuildGraphRequest"
+      },
+      "CitiesResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CityDTO"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "default": 0
+          },
+          "cities": {
+            "items": {
+              "$ref": "#/components/schemas/CityDTO"
+            },
+            "type": "array",
+            "title": "Cities",
+            "description": "Alias retrocompatível, idêntico a ``items``: o frontend e os testes atuais ainda leem a chave ``cities``."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "CitiesResponse",
+        "description": "Envelope paginado do catálogo de municípios (PLAN §9).\n\n``items`` é a página atual (já filtrada por ``q``, ordenada por ``sort``\ne recortada por ``limit``/``offset``); ``total`` conta quantas cidades\natendem ao filtro, antes da paginação."
+      },
+      "CityDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "neighbors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Neighbors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "lat",
+          "lon"
+        ],
+        "title": "CityDTO"
+      },
+      "ComparisonDTO": {
+        "properties": {
+          "same_cost": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Same Cost"
+          },
+          "same_edges": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Same Edges"
+          },
+          "cost_difference": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Difference"
+          },
+          "has_weight_ties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Has Weight Ties"
+          },
+          "kruskal_only_edges": {
+            "items": {
+              "$ref": "#/components/schemas/EdgeDTO"
+            },
+            "type": "array",
+            "title": "Kruskal Only Edges"
+          },
+          "prim_only_edges": {
+            "items": {
+              "$ref": "#/components/schemas/EdgeDTO"
+            },
+            "type": "array",
+            "title": "Prim Only Edges"
+          },
+          "is_consistent": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Consistent"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "ComparisonDTO"
+      },
+      "ComponentDTO": {
+        "properties": {
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "node_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Node Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "size",
+          "node_ids"
+        ],
+        "title": "ComponentDTO"
+      },
+      "DiscardedDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "reason"
+        ],
+        "title": "DiscardedDTO"
+      },
+      "EdgeDTO": {
+        "properties": {
+          "u": {
+            "type": "string",
+            "title": "U"
+          },
+          "v": {
+            "type": "string",
+            "title": "V"
+          },
+          "weight": {
+            "type": "number",
+            "title": "Weight"
+          },
+          "attrs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Attrs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "u",
+          "v",
+          "weight"
+        ],
+        "title": "EdgeDTO"
+      },
+      "GraphDTO": {
+        "properties": {
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/NodeDTO"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/EdgeDTO"
+            },
+            "type": "array",
+            "title": "Edges"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "discarded": {
+            "items": {
+              "$ref": "#/components/schemas/DiscardedDTO"
+            },
+            "type": "array",
+            "title": "Discarded"
+          },
+          "stats": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GraphStatsDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "nodes",
+          "edges"
+        ],
+        "title": "GraphDTO"
+      },
+      "GraphStatsDTO": {
+        "properties": {
+          "n_nodes": {
+            "type": "integer",
+            "title": "N Nodes"
+          },
+          "n_edges": {
+            "type": "integer",
+            "title": "N Edges"
+          },
+          "n_components": {
+            "type": "integer",
+            "title": "N Components"
+          },
+          "is_connected": {
+            "type": "boolean",
+            "title": "Is Connected"
+          },
+          "n_divisa_edges": {
+            "type": "integer",
+            "title": "N Divisa Edges",
+            "default": 0
+          },
+          "n_manual_edges": {
+            "type": "integer",
+            "title": "N Manual Edges",
+            "default": 0
+          },
+          "component_sizes": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Component Sizes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "n_nodes",
+          "n_edges",
+          "n_components",
+          "is_connected"
+        ],
+        "title": "GraphStatsDTO"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "ok"
+          }
+        },
+        "type": "object",
+        "title": "HealthResponse"
+      },
+      "MSTResultDTO": {
+        "properties": {
+          "algorithm": {
+            "type": "string",
+            "title": "Algorithm"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/EdgeDTO"
+            },
+            "type": "array",
+            "title": "Edges"
+          },
+          "total_cost": {
+            "type": "number",
+            "title": "Total Cost"
+          },
+          "n_components": {
+            "type": "integer",
+            "title": "N Components"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentDTO"
+            },
+            "type": "array",
+            "title": "Components"
+          },
+          "is_forest": {
+            "type": "boolean",
+            "title": "Is Forest"
+          },
+          "metrics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metrics"
+          },
+          "trace": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trace"
+          }
+        },
+        "type": "object",
+        "required": [
+          "algorithm",
+          "edges",
+          "total_cost",
+          "n_components",
+          "components",
+          "is_forest",
+          "metrics"
+        ],
+        "title": "MSTResultDTO"
+      },
+      "NodeDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "NodeDTO"
+      },
+      "PresetDetailDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "include_manual": {
+            "type": "boolean",
+            "title": "Include Manual"
+          },
+          "graph": {
+            "$ref": "#/components/schemas/GraphDTO"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "include_manual",
+          "graph"
+        ],
+        "title": "PresetDetailDTO"
+      },
+      "PresetSummaryDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "n_nodes": {
+            "type": "integer",
+            "title": "N Nodes"
+          },
+          "n_edges": {
+            "type": "integer",
+            "title": "N Edges"
+          },
+          "n_components": {
+            "type": "integer",
+            "title": "N Components"
+          },
+          "include_manual": {
+            "type": "boolean",
+            "title": "Include Manual"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "n_nodes",
+          "n_edges",
+          "n_components",
+          "include_manual"
+        ],
+        "title": "PresetSummaryDTO"
+      },
+      "PresetsResponse": {
+        "properties": {
+          "presets": {
+            "items": {
+              "$ref": "#/components/schemas/PresetSummaryDTO"
+            },
+            "type": "array",
+            "title": "Presets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "presets"
+        ],
+        "title": "PresetsResponse"
+      },
+      "RunRequest": {
+        "properties": {
+          "graph": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GraphDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "preset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset Id"
+          },
+          "algorithm": {
+            "type": "string",
+            "enum": [
+              "kruskal",
+              "prim",
+              "both"
+            ],
+            "title": "Algorithm",
+            "default": "both"
+          },
+          "start_vertex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Vertex"
+          },
+          "trace": {
+            "type": "boolean",
+            "title": "Trace",
+            "default": false
+          },
+          "verify": {
+            "type": "boolean",
+            "title": "Verify",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "RunRequest"
+      },
+      "RunResponse": {
+        "properties": {
+          "kruskal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MSTResultDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prim": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MSTResultDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "comparison": {
+            "$ref": "#/components/schemas/ComparisonDTO"
+          },
+          "verification": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/VerificationDTO"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification"
+          },
+          "graph_stats": {
+            "$ref": "#/components/schemas/GraphStatsDTO"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "comparison",
+          "graph_stats"
+        ],
+        "title": "RunResponse"
+      },
+      "UploadResponseDTO": {
+        "properties": {
+          "graph": {
+            "$ref": "#/components/schemas/GraphDTO"
+          }
+        },
+        "type": "object",
+        "required": [
+          "graph"
+        ],
+        "title": "UploadResponseDTO"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VerificationDTO": {
+        "properties": {
+          "performed": {
+            "type": "boolean",
+            "title": "Performed"
+          },
+          "is_forest": {
+            "type": "boolean",
+            "title": "Is Forest"
+          },
+          "cycle_property": {
+            "type": "boolean",
+            "title": "Cycle Property"
+          },
+          "is_valid": {
+            "type": "boolean",
+            "title": "Is Valid"
+          },
+          "cost_consistent": {
+            "type": "boolean",
+            "title": "Cost Consistent"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "details": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Details"
+          }
+        },
+        "type": "object",
+        "required": [
+          "performed",
+          "is_forest",
+          "cycle_property",
+          "is_valid",
+          "cost_consistent",
+          "message"
+        ],
+        "title": "VerificationDTO"
+      }
+    }
+  }
+}

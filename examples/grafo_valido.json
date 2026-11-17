@@ -1,0 +1,21 @@
+{
+  "nodes": [
+    { "id": "A", "name": "Alfa", "lat": -22.10, "lon": -49.10 },
+    { "id": "B", "name": "Beta", "lat": -22.25, "lon": -49.05 },
+    { "id": "C", "name": "Gama", "lat": -22.20, "lon": -48.90 },
+    { "id": "D", "name": "Delta", "lat": -22.38, "lon": -49.02 },
+    { "id": "E", "name": "Épsilon", "lat": -22.42, "lon": -48.86 },
+    { "id": "F", "name": "Zeta", "lat": -22.55, "lon": -49.12 }
+  ],
+  "edges": [
+    { "source": "A", "target": "B", "weight": 18.2 },
+    { "source": "A", "target": "C", "weight": 22.4 },
+    { "source": "B", "target": "C", "weight": 16.1 },
+    { "source": "B", "target": "D", "weight": 14.8 },
+    { "source": "C", "target": "D", "weight": 22.9 },
+    { "source": "C", "target": "E", "weight": 23.5 },
+    { "source": "D", "target": "E", "weight": 15.7 },
+    { "source": "D", "target": "F", "weight": 22.0 },
+    { "source": "E", "target": "F", "weight": 26.4 }
+  ]
+}

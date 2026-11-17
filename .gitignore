@@ -1,0 +1,22 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.DS_Store
+.env
+
+# Arquivos brutos baixados pelo usuário: não são necessários para executar.
+data/raw/
+
+frontend/node_modules/
+frontend/.vite/
+frontend/coverage/
+
+# Pastas usadas para desenvolvimento com IA: nunca comitar.
+.opencode/
+.sdd/
+
+# Área de trabalho do relatório técnico: nunca comitar.
+temp/

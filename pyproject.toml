@@ -1,0 +1,79 @@
+[project]
+name = "arvore-geradora-minima"
+version = "0.1.0"
+description = "Projeto Árvore Geradora Mínima"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi==0.162.2",
+    "uvicorn[standard]==0.54.0",
+    "pydantic==2.14.3",
+    "python-multipart==0.0.33",
+]
+
+[project.optional-dependencies]
+dev = [
+    "odfpy==1.4.1",
+    "pytest==9.2.0",
+    "pytest-cov==7.1.0",
+    "httpx==0.28.1",
+    "networkx==3.7",
+    "ruff==0.13.0",
+    "mypy==1.15.0",
+    "coverage==7.10.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["backend"]
+lint.select = ["E", "F", "I", "B"]
+lint.isort.known-first-party = ["app"]
+format.quote-style = "single"
+format.indent-style = "space"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+exclude = [
+    "tests/",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+rootdir = "."
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = [
+    "-q",
+    "--strict-markers",
+]
+markers = []
+# BUG-021: o Starlette emite StarletteDeprecationWarning no import de
+# starlette.testclient porque o projeto ainda usa httpx (httpx2 não é estável).
+# Filtro temporário apenas para não poluir a saída do pytest; remover quando a
+# migração para httpx2 for adotada (ver .sdd/BUGS.md, BUG-021).
+filterwarnings = [
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.:starlette.exceptions.StarletteDeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["backend"]
+omit = [
+    "tests/*",
+    "backend/__init__.py",
+]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == __main__:",
+]

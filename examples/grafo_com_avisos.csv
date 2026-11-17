@@ -1,0 +1,5 @@
+origem,destino,peso
+A,B,2
+B,A,5
+A,A,1
+B,C,3
